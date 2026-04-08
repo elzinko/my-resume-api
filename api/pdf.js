@@ -58,10 +58,13 @@ module.exports = async (req, res) => {
       preferCSSPageSize: true,
       margin: { top: '12mm', right: '12mm', bottom: '12mm', left: '12mm' },
     });
+    // puppeteer v23 returns Uint8Array; wrap in Buffer so res.send emits binary
+    const pdfBuffer = Buffer.isBuffer(pdf) ? pdf : Buffer.from(pdf);
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'inline; filename="resume.pdf"');
     res.setHeader('Cache-Control', 'public, max-age=300');
-    res.status(200).send(pdf);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.status(200).end(pdfBuffer);
   } catch (err) {
     console.error('PDF generation failed', err);
     res.status(500).json({ error: 'PDF generation failed', message: err.message });
