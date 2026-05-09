@@ -6,12 +6,13 @@
 //   landscape: 1 to enable landscape
 //   timeout: ms (default 30000)
 //
-// Allowed origins are restricted to elzinko.github.io and localhost for safety.
+// Allowed origins are restricted to elzinko.fr, elzinko.github.io and localhost for safety.
 
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 
 const ALLOWED_HOST_PATTERNS = [
+  /^https?:\/\/(www\.)?elzinko\.fr\//,
   /^https:\/\/elzinko\.github\.io\//,
   /^https?:\/\/localhost(:\d+)?\//,
   /^https?:\/\/127\.0\.0\.1(:\d+)?\//,
