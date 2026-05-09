@@ -6,20 +6,50 @@
 //   landscape: 1 to enable landscape
 //   timeout: ms (default 30000)
 //
-// Allowed origins are restricted to elzinko.fr, elzinko.github.io and localhost for safety.
+// Allowed origins are configured via the ALLOWED_HOSTS env var (Vercel project
+// settings). Comma-separated list of hostnames; * is allowed as a leading
+// label for wildcards (e.g. *.example.com matches sub.example.com but not
+// example.com itself). The protocol is always restricted to http/https.
+// If ALLOWED_HOSTS is unset, falls back to a hardcoded safe default.
 
 const chromium = require('@sparticuz/chromium');
 const puppeteer = require('puppeteer-core');
 
-const ALLOWED_HOST_PATTERNS = [
-  /^https?:\/\/(www\.)?elzinko\.fr\//,
-  /^https:\/\/elzinko\.github\.io\//,
-  /^https?:\/\/localhost(:\d+)?\//,
-  /^https?:\/\/127\.0\.0\.1(:\d+)?\//,
+const DEFAULT_ALLOWED_HOSTS = [
+  'elzinko.fr',
+  'www.elzinko.fr',
+  'elzinko.github.io',
+  'localhost',
+  '127.0.0.1',
 ];
 
+function getAllowedHosts() {
+  const env = (process.env.ALLOWED_HOSTS || '').trim();
+  if (!env) return DEFAULT_ALLOWED_HOSTS;
+  return env
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function hostMatches(hostname, pattern) {
+  if (pattern.startsWith('*.')) {
+    const suffix = pattern.slice(1); // ".example.com"
+    return hostname.endsWith(suffix) && hostname.length > suffix.length;
+  }
+  return hostname === pattern;
+}
+
 function isAllowed(target) {
-  return ALLOWED_HOST_PATTERNS.some((re) => re.test(target));
+  let url;
+  try {
+    url = new URL(target);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false;
+  const hostname = url.hostname.toLowerCase();
+  return getAllowedHosts().some((p) => hostMatches(hostname, p));
 }
 
 module.exports = async (req, res) => {
